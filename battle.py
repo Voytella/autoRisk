@@ -40,7 +40,7 @@ args = parser.parse_args()
 
 # -----------END ARGUMENTS-----------
 
-# ----------BEGIN FUNCTIONS----------
+# ----------BEGIN FIGHT FUNCTIONS----------
 
 # simulate the roll of several dice; return list of random integers 1-6
 def rollD6s(numRolls):
@@ -54,10 +54,9 @@ def rollD6s(numRolls):
 def getRolls(numAtt, numDef):
     return (sorted(rollD6s(numAtt)), sorted(rollD6s(numDef)))
 
-
 # return the loss at the end of a fight
 def getFightLoss(rollAtt, rollDef):
-    return (0,1) if rollDef < rollAtt else (1,0)
+    return (0,-1) if rollDef < rollAtt else (-1,0)
 
 # return list of tuples of losses of each side for each fight
 def getFightLosses(rollsAtt, rollsDef):
@@ -73,5 +72,61 @@ def getBattleLosses(numAtt, numDef):
     rolls = getRolls(numAtt, numDef)
     return tuple([sum(fight) for fight in zip(*getFightLosses(rolls[0], rolls[1]))])
 
-# -----------END FUNCTIONS-----------
+# -----------END FIGHT FUNCTIONS-----------
 
+# ----------BEGIN BATTLE FUNCTIONS----------
+
+# if attacking troops entry is invalid, try again
+def retryGetNumAtt(enteredNumAtt, numAtt, totAtt):
+    print("ERR: attacking troop number \"{}\" invalid".format(enteredNumAtt))
+    return getNumAtt(numAtt, totAtt)
+
+# return the number of troops to be used in the current fight and validate the
+# entry 
+def getNumAtt(numAtt, totAtt):
+   
+    # ask the user to enter how many troops are to attack
+    enteredNumAtt = input("Enter number of attacking troops. [{}]> ".
+                          format(numAtt))
+
+    # if entry blank, just use the remembered troop number
+    if not enteredNumAtt:
+        return numAtt
+
+    # verify the entered value is a number
+    enteredNumAtt = int(enteredNumAtt) if enteredNumAtt.isdigit() else \
+    retryGetNumAtt(enteredNumAtt, numAtt, totAtt)
+    
+    # validate entry; if invalid, ask again
+    if enteredNumAtt > 0 and \
+       enteredNumAtt < 4 and \
+       enteredNumAtt < totAtt:
+        return enteredNumAtt
+    else:
+        return retryGetNumAtt(enteredNumAtt, numAtt, totAtt)
+
+# -----------END BATTLE FUNCTIONS-----------
+
+# number of troops on each side (att, def)
+troops = (args.attacking, args.defending)
+
+# initialize number of attacking troops
+numAtt = 1
+
+# display the initial number of attacking and defending troops
+print("A: {}, D: {}".format(str(troops[0]), str(troops[1]))) 
+
+# continue the attack until either attacker or defender runs out of troops
+while troops[0] > 1 and troops[1] > 0:
+    
+    # get number attacking troops
+    numAtt = getNumAtt(numAtt, troops[0])
+
+    # get the losses of the battle
+    battleLosses = getBattleLosses(numAtt, 2 if args.defending > 1 else 1)
+
+    # subtract losses from total troop numbers
+    troops = tuple([sum(ele) for ele in zip(troops, battleLosses)])
+    
+    # display the new number of attacking and defending troops
+    print("A: {}, D: {}".format(troops[0], troops[1] if troops[1] > -1 else 0))
