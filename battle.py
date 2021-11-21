@@ -21,6 +21,7 @@
 
 import argparse
 import itertools
+import functools
 import random
 
 # ----------BEGIN ARGUMENTS----------
@@ -53,8 +54,24 @@ def rollD6s(numRolls):
 def getRolls(numAtt, numDef):
     return (sorted(rollD6s(numAtt)), sorted(rollD6s(numDef)))
 
-# return tuple of losses of each side: (attLosses, defLosses)
-def getLosses(rolls):
-    return 0
+
+# return the loss at the end of a fight
+def getFightLoss(rollAtt, rollDef):
+    return (0,1) if rollDef < rollAtt else (1,0)
+
+# return list of tuples of losses of each side for each fight
+def getFightLosses(rollsAtt, rollsDef):
+    if rollsAtt and rollsDef:
+        return list(itertools.chain(*[
+            [getFightLoss(rollsAtt[-1], rollsDef[-1])],
+            getFightLosses(rollsAtt[0:-1], rollsDef[0:-1])])) 
+    else:
+        return []
+    
+# perform a battle; return total losses as tuple: (attLosses, defLosses)
+def getBattleLosses(numAtt, numDef):
+    rolls = getRolls(numAtt, numDef)
+    return tuple([sum(fight) for fight in zip(*getFightLosses(rolls[0], rolls[1]))])
+
 # -----------END FUNCTIONS-----------
 
