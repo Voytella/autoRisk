@@ -20,6 +20,7 @@
 #    attack is canceled.
 
 import argparse
+import itertools
 import random
 
 # ----------BEGIN ARGUMENTS----------
@@ -40,11 +41,20 @@ args = parser.parse_args()
 
 # ----------BEGIN FUNCTIONS----------
 
-# simulate the roll of a die; return random integer 1-6
-def rollD6():
-    return random.randint(1,6)
+# simulate the roll of several dice; return list of random integers 1-6
+def rollD6s(numRolls):
+    if numRolls:
+        return list(itertools.chain(*[[random.randint(1,6)], 
+                                      rollD6s(numRolls - 1)]))
+    else: 
+        return [] 
 
+# perform the dice rolls; return tuple of sorted lists: (attRolls, defRolls)
+def getRolls(numAtt, numDef):
+    return (sorted(rollD6s(numAtt)), sorted(rollD6s(numDef)))
 
-
+# return tuple of losses of each side: (attLosses, defLosses)
+def getLosses(rolls):
+    return 0
 # -----------END FUNCTIONS-----------
 
