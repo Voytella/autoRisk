@@ -36,6 +36,12 @@ parser.add_argument("attacking", type=int,
 parser.add_argument("defending", type=int,
                     help="The total number of troops in the attacking territory.")
 
+# optional argument runs same maximum number of attacking troops until battle is
+# decided
+parser.add_argument("-a", "--auto", type=int, metavar="TROOPS",
+                    help="Attack with the same maximum number of troops until \
+the battle is decided.")
+
 args = parser.parse_args()
 
 # -----------END ARGUMENTS-----------
@@ -76,9 +82,21 @@ def getBattleLosses(numAtt, numDef):
 
 # ----------BEGIN BATTLE FUNCTIONS----------
 
+# verify the entered value for automated attacks is valid
+def isValidAuto(enteredAuto, totAtt):
+    
+    # ensure entered value is valid
+    if enteredAuto > 0 and \
+       enteredAuto < 4 and \
+       enteredAuto < totAtt:
+        return enteredAuto
+    else:
+        raise argparse.ArgumentTypeError("invalid number of attacking \
+troops: {}".format(enteredAuto))
+
 # if attacking troops entry is invalid, try again
 def retryGetNumAtt(enteredNumAtt, numAtt, totAtt):
-    print("ERR: attacking troop number \"{}\" invalid".format(enteredNumAtt))
+    print("ERR: invalid number of attacking troops: {}".format(enteredNumAtt))
     return getNumAtt(numAtt, totAtt)
 
 # return the number of troops to be used in the current fight and validate the
@@ -104,6 +122,13 @@ def getNumAtt(numAtt, totAtt):
         return enteredNumAtt
     else:
         return retryGetNumAtt(enteredNumAtt, numAtt, totAtt)
+    
+# ensure attacking troops are valid in auto mode
+def verifyAuto(numAtt, totAtt):
+    if totAtt > numAtt:
+        return numAtt
+    else:
+        return verifyAuto(numAtt - 1, totAtt)
 
 # -----------END BATTLE FUNCTIONS-----------
 
@@ -111,7 +136,7 @@ def getNumAtt(numAtt, totAtt):
 troops = (args.attacking, args.defending)
 
 # initialize number of attacking troops
-numAtt = 1
+numAtt = args.auto if args.auto and isValidAuto(args.auto, troops[0]) else 1
 
 # display the initial number of attacking and defending troops
 print("A: {}, D: {}".format(str(troops[0]), str(troops[1]))) 
@@ -120,8 +145,9 @@ print("A: {}, D: {}".format(str(troops[0]), str(troops[1])))
 while troops[0] > 1 and troops[1] > 0:
     
     # get number attacking troops
-    numAtt = getNumAtt(numAtt, troops[0])
-
+    numAtt = verifyAuto(args.auto, troops[0]) if args.auto else \
+             getNumAtt(numAtt, troops[0])
+    
     # get the losses of the battle
     battleLosses = getBattleLosses(numAtt, 2 if args.defending > 1 else 1)
 
