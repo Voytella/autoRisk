@@ -102,13 +102,13 @@ def retryGetNumAtt(enteredNumAtt, numAtt, totAtt):
 # return the number of troops to be used in the current fight and validate the
 # entry 
 def getNumAtt(numAtt, totAtt):
-   
+    
     # ask the user to enter how many troops are to attack
     enteredNumAtt = input("Enter number of attacking troops. [{}]> ".
                           format(numAtt))
 
-    # if entry blank, just use the remembered troop number
-    if not enteredNumAtt:
+    # if entry blank, just use the remembered troop number 
+    if not enteredNumAtt and numAtt < totAtt:
         return numAtt
 
     # verify the entered value is a number
@@ -144,6 +144,10 @@ print("A: {}, D: {}".format(str(troops[0]), str(troops[1])))
 # continue the attack until either attacker or defender runs out of troops
 while troops[0] > 1 and troops[1] > 0:
     
+    # ensure number of attacking troops stays valid as total attacking troop
+    # numbers decrease
+    numAtt = numAtt if troops[0] > numAtt else numAtt - 1
+
     # get number attacking troops
     numAtt = verifyAuto(args.auto, troops[0]) if args.auto else \
              getNumAtt(numAtt, troops[0])
